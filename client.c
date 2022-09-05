@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   client.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vrogiste <vrogiste@student.s19.be>         +#+  +:+       +#+        */
+/*   By: vrogiste <vrogiste@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/01 13:43:06 by vrogiste          #+#    #+#             */
-/*   Updated: 2022/09/01 17:09:37 by vrogiste         ###   ########.fr       */
+/*   Updated: 2022/09/05 11:55:52 by vrogiste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,11 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <stdatomic.h>
 
 #include "utils.h"
 
-static bool	g_lock = true;
+static atomic_bool	g_lock = true;
 
 void	action(int sig)
 {
@@ -35,7 +36,7 @@ void	send_byte(int pid, unsigned char c)
 	{
 		g_lock = true;
 		bit = c & (1 << i);
-		kill(pid, (SIGUSR1 * !bit) + (SIGUSR2 * bit));
+		kill(pid, (SIGUSR1 * !bit) | (SIGUSR2 * bit));
 		while (g_lock)
 			;
 		i++;

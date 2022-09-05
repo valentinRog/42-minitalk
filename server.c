@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: vrogiste <vrogiste@student.s19.be>         +#+  +:+       +#+        */
+/*   By: vrogiste <vrogiste@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/09/01 13:42:33 by vrogiste          #+#    #+#             */
-/*   Updated: 2022/09/01 16:26:38 by vrogiste         ###   ########.fr       */
+/*   Updated: 2022/09/05 12:11:37 by vrogiste         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,9 @@
 
 #include "utils.h"
 
-#define BUFFER_SIZE 10000
+#define BUFFER_SIZE 100000
+
+static sig_atomic_t	g_received[2];
 
 static void	action(int sig, siginfo_t *info, void *context)
 {
@@ -26,11 +28,13 @@ static void	action(int sig, siginfo_t *info, void *context)
 	static int				len;
 
 	(void)context;
-	c |= (sig == SIGUSR2) << i;
-	i++;
+	if (!(sig == SIGUSR2 || sig == SIGUSR1))
+		return ;
+	c |= (sig == SIGUSR2) << i++;
 	if (i == sizeof(unsigned char) << 3)
 	{
 		buffer[len] = c;
+		len++;
 		if (!c || len == BUFFER_SIZE)
 		{
 			write(STDOUT_FILENO, buffer, len);
@@ -38,12 +42,11 @@ static void	action(int sig, siginfo_t *info, void *context)
 			if (!c)
 				dputstr(STDOUT_FILENO, "\n");
 		}
-		else
-			len++;
 		i = 0;
 		c = 0;
 	}
-	kill(info->si_pid, SIGUSR1);
+	g_received[0] = 1;
+	g_received[1] = info->si_pid;
 }
 
 int	main(void)
@@ -58,5 +61,10 @@ int	main(void)
 	sigaction(SIGUSR1, &s, 0);
 	sigaction(SIGUSR2, &s, 0);
 	while (true)
-		pause();
+	{
+		while (!g_received[0])
+			;
+		g_received[0] = 0;
+		kill(g_received[1], SIGUSR1);
+	}
 }
