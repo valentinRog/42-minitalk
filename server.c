@@ -63,7 +63,7 @@ int	main(void)
 	while (true)
 	{
 		while (!g_received[0])
-			;
+			pause();
 		g_received[0] = 0;
 		kill(g_received[1], SIGUSR1);
 	}

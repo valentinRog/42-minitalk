@@ -38,7 +38,7 @@ void	send_byte(int pid, unsigned char c)
 		bit = c & (1 << i);
 		kill(pid, (SIGUSR1 * !bit) | (SIGUSR2 * bit));
 		while (g_lock)
-			;
+			pause();
 		i++;
 	}
 }
